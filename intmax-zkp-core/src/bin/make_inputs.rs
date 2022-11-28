@@ -1,4 +1,5 @@
 use std::{
+    fs,
     sync::{Arc, Mutex},
     time::Instant,
 };
@@ -10,34 +11,19 @@ use plonky2::{
     },
     hash::hash_types::HashOut,
     iop::witness::PartialWitness,
-    plonk::{
-        circuit_builder::CircuitBuilder,
-        circuit_data::CircuitConfig,
-        config::{GenericConfig, PoseidonGoldilocksConfig},
-    },
+    plonk::config::{GenericConfig, PoseidonGoldilocksConfig},
 };
 
 use intmax_zkp_core::{
-    merkle_tree::tree::get_merkle_proof,
-    rollup::{
-        circuits::{
-            merge_and_purge::make_user_proof_circuit,
-            proposal_and_approval::make_block_proof_circuit,
-        },
-        gadgets::{batch::BatchBlockProofTarget, deposit_block::DepositInfo},
-    },
+    rollup::circuits::merge_and_purge::{make_user_proof_circuit, PurgeWitness},
     sparse_merkle_tree::{
-        gadgets::process::process_smt::SmtProcessProof,
         goldilocks_poseidon::{
             GoldilocksHashOut, LayeredLayeredPoseidonSparseMerkleTree, NodeDataMemory,
-            PoseidonSparseMerkleTree, WrappedHashOut,
+            PoseidonSparseMerkleTree, WrappedHashOut, Wrapper,
         },
         proof::SparseMerkleInclusionProof,
     },
-    transaction::{
-        block_header::{get_block_hash, BlockHeader},
-        gadgets::merge::MergeProof,
-    },
+    transaction::{block_header::BlockHeader, gadgets::merge::MergeProof},
     zkdsa::{
         account::{private_key_to_account, Address},
         circuits::make_simple_signature_circuit,
@@ -60,8 +46,8 @@ pub struct SimpleSignatureInput {
 pub struct UserTransactionInput {
     sender_address: Address<F>,
     merge_witnesses: MergeProof<F>,
-    purge_input_witnesses: (SmtProcessProof<F>, SmtProcessProof<F>, SmtProcessProof<F>),
-    purge_output_witnesses: (SmtProcessProof<F>, SmtProcessProof<F>, SmtProcessProof<F>),
+    purge_input_witnesses: PurgeWitness,
+    purge_output_witnesses: PurgeWitness,
     old_user_asset_root: HashOut<F>,
 }
 
@@ -324,7 +310,7 @@ fn main() {
             sender2_account.address,
             &sender2_input_witness,
             &sender2_output_witness,
-            *sender2_input_witness.first().unwrap().0.old_root,
+            sender2_input_witness.first().unwrap().0.old_root.0.clone(),
         );
 
     println!("start proving: sender2_tx_proof");
@@ -393,8 +379,25 @@ fn main() {
     let user_transaction_input = UserTransactionInput {
         sender_address: sender2_account.address,
         merge_witnesses: merge_proof,
-        purge_input_witnesses: sender2_input_witness,
-        purge_output_witnesses: todo!(),
-        old_user_asset_root: todo!(),
+        purge_input_witnesses: sender2_input_witness.clone(),
+        purge_output_witnesses: sender2_output_witness,
+        old_user_asset_root: sender2_input_witness.first().unwrap().0.old_root.0,
     };
+    let simple_signature_input = SimpleSignatureInput {
+        private_key: Wrapper(sender2_account.private_key),
+        message: world_state_tree.get_root(),
+    };
+
+    let user_transaction_input_str = serde_json::to_string(&user_transaction_input).unwrap();
+    fs::write(
+        "./data/user_transaction_input.json",
+        &user_transaction_input_str,
+    )
+    .unwrap();
+    let simple_signature_input_str = serde_json::to_string(&simple_signature_input).unwrap();
+    fs::write(
+        "./data/simple_signature_input.json",
+        &simple_signature_input_str,
+    )
+    .unwrap();
 }
