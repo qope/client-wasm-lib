@@ -1,5 +1,5 @@
 use plonky2::{
-    field::extension::Extendable,
+    field::{extension::Extendable, goldilocks_field::GoldilocksField},
     hash::hash_types::{HashOut, HashOutTarget, RichField},
     iop::{
         target::Target,
@@ -16,7 +16,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     sparse_merkle_tree::{
-        gadgets::process::process_smt::SmtProcessProof, goldilocks_poseidon::WrappedHashOut,
+        gadgets::process::process_smt::SmtProcessProof,
+        goldilocks_poseidon::{WrappedHashOut, Wrapper},
+        proof::SparseMerkleProcessProof,
     },
     transaction::gadgets::{
         merge::{MergeProof, MergeTransitionTarget},
@@ -385,6 +387,24 @@ impl<
     }
 }
 
+pub type PurgeWitness = Vec<(
+    SparseMerkleProcessProof<
+        Wrapper<HashOut<GoldilocksField>>,
+        Wrapper<HashOut<GoldilocksField>>,
+        Wrapper<HashOut<GoldilocksField>>,
+    >,
+    SparseMerkleProcessProof<
+        Wrapper<HashOut<GoldilocksField>>,
+        Wrapper<HashOut<GoldilocksField>>,
+        Wrapper<HashOut<GoldilocksField>>,
+    >,
+    SparseMerkleProcessProof<
+        Wrapper<HashOut<GoldilocksField>>,
+        Wrapper<HashOut<GoldilocksField>>,
+        Wrapper<HashOut<GoldilocksField>>,
+    >,
+)>;
+
 /// witness を入力にとり、 user_tx_proof を返す関数
 pub fn prove_user_transaction<
     const N_LOG_MAX_USERS: usize,
@@ -400,8 +420,8 @@ pub fn prove_user_transaction<
 >(
     sender_address: Address<F>,
     merge_witnesses: &[MergeProof<F>],
-    purge_input_witnesses: &[(SmtProcessProof<F>, SmtProcessProof<F>, SmtProcessProof<F>)],
-    purge_output_witnesses: &[(SmtProcessProof<F>, SmtProcessProof<F>, SmtProcessProof<F>)],
+    purge_input_witnesses: PurgeWitness,
+    purge_output_witnesses: PurgeWitness,
     old_user_asset_root: HashOut<F>,
 ) -> anyhow::Result<MergeAndPurgeTransitionProofWithPublicInputs<F, C, D>> {
     let merge_and_purge_circuit = make_user_proof_circuit::<
@@ -422,8 +442,8 @@ pub fn prove_user_transaction<
         &mut pw,
         sender_address,
         merge_witnesses,
-        purge_input_witnesses,
-        purge_output_witnesses,
+        &purge_input_witnesses,
+        &purge_output_witnesses,
         old_user_asset_root,
     );
 

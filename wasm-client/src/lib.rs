@@ -1,3 +1,4 @@
+use intmax_zkp_core::rollup::circuits::merge_and_purge::PurgeWitness;
 use intmax_zkp_core::sparse_merkle_tree::gadgets::process::process_smt::SmtProcessProof;
 use intmax_zkp_core::transaction::gadgets::merge::MergeProof;
 use intmax_zkp_core::zkdsa::account::Address;
@@ -38,8 +39,8 @@ pub struct SimpleSignatureInput {
 pub struct UserTransactionInput {
     sender_address: Address<F>,
     merge_witnesses: MergeProof<F>,
-    purge_input_witnesses: (SmtProcessProof<F>, SmtProcessProof<F>, SmtProcessProof<F>),
-    purge_output_witnesses: (SmtProcessProof<F>, SmtProcessProof<F>, SmtProcessProof<F>),
+    purge_input_witnesses: PurgeWitness,
+    purge_output_witnesses: PurgeWitness,
     old_user_asset_root: HashOut<F>,
 }
 
@@ -87,8 +88,8 @@ pub fn prove_user_transaction(user_transaction_input_str: &str) -> String {
     >(
         user_transaction_input.sender_address,
         &[user_transaction_input.merge_witnesses],
-        &[user_transaction_input.purge_input_witnesses],
-        &[user_transaction_input.purge_output_witnesses],
+        user_transaction_input.purge_input_witnesses,
+        user_transaction_input.purge_output_witnesses,
         user_transaction_input.old_user_asset_root,
     )
     .expect("prove failed: prove_user_transaction");
