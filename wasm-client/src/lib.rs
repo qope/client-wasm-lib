@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use intmax_zkp_core::rollup::circuits::merge_and_purge::PurgeWitness;
 use intmax_zkp_core::sparse_merkle_tree::gadgets::process::process_smt::SmtProcessProof;
 use intmax_zkp_core::transaction::gadgets::merge::MergeProof;
@@ -15,20 +17,45 @@ type F = GoldilocksField;
 
 use wasm_bindgen::prelude::*;
 
-const N_LOG_MAX_USERS: usize = 3;
-const N_LOG_MAX_TXS: usize = 3;
-const N_LOG_MAX_CONTRACTS: usize = 3;
-const N_LOG_MAX_VARIABLES: usize = 3;
-const N_LOG_TXS: usize = 2;
-const N_LOG_RECIPIENTS: usize = 3;
-const N_LOG_CONTRACTS: usize = 3;
-const N_LOG_VARIABLES: usize = 3;
-const N_DEPOSITS: usize = 2;
-const N_DIFFS: usize = 2;
-const N_MERGES: usize = 2;
-const N_TXS: usize = 2usize.pow(N_LOG_TXS as u32);
-const N_BLOCKS: usize = 2;
+/// world state tree における user 層の tree の深さ
+pub const N_LOG_MAX_USERS: usize = 8;
 
+/// world state tree における user 層の tree の深さ
+pub const N_LOG_MAX_TXS: usize = 8;
+
+/// world state tree における user 層の tree の深さ
+pub const N_LOG_MAX_CONTRACTS: usize = 8;
+
+/// world state tree における user 層の tree の深さ
+pub const N_LOG_MAX_VARIABLES: usize = 8;
+
+/// diff tree における transaction 層の tree の深さ
+pub const N_LOG_TXS: usize = 3;
+pub const N_TXS: usize = 2usize.pow(N_LOG_TXS as u32);
+
+/// diff tree における transaction 層の tree の深さ
+pub const N_LOG_RECIPIENTS: usize = 8;
+
+/// diff tree における transaction 層の tree の深さ
+pub const N_LOG_CONTRACTS: usize = 8;
+
+/// diff tree における transaction 層の tree の深さ
+pub const N_LOG_VARIABLES: usize = 8;
+
+/// 1 つの block に含める deposit の数
+pub const N_DEPOSITS: usize = 8;
+
+/// 1 つの block に含める merge の数
+pub const N_MERGES: usize = 8;
+
+/// 1 つの block に含める purge の数
+pub const N_DIFFS: usize = 8;
+
+/// 1 つの batch でまとめる block の数
+pub const N_BLOCKS: usize = 2;
+
+/// block number の最大値の対数
+pub const N_LOG_MAX_BLOCKS: usize = 32;
 #[derive(Serialize, Deserialize)]
 pub struct SimpleSignatureInput {
     private_key: WrappedHashOut<F>,
@@ -95,4 +122,23 @@ pub fn prove_user_transaction(user_transaction_input_str: &str) -> String {
     .expect("prove failed: prove_user_transaction");
     let proof_str = serde_json::to_string(&proof).unwrap();
     proof_str
+}
+
+#[wasm_bindgen]
+pub fn echo(input: &str) -> String {
+    String::from_str(input).unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use super::*;
+
+    #[test]
+    fn test_prove_user_transaction() {
+        let user_transaction_str =
+            fs::read_to_string("../intmax-zkp-core/data/user_transaction_input.json").unwrap();
+        prove_user_transaction(&user_transaction_str);
+    }
 }

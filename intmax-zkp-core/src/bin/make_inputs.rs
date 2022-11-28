@@ -50,22 +50,47 @@ pub struct UserTransactionInput {
     purge_output_witnesses: PurgeWitness,
     old_user_asset_root: HashOut<F>,
 }
+/// world state tree における user 層の tree の深さ
+pub const N_LOG_MAX_USERS: usize = 8;
+
+/// world state tree における user 層の tree の深さ
+pub const N_LOG_MAX_TXS: usize = 8;
+
+/// world state tree における user 層の tree の深さ
+pub const N_LOG_MAX_CONTRACTS: usize = 8;
+
+/// world state tree における user 層の tree の深さ
+pub const N_LOG_MAX_VARIABLES: usize = 8;
+
+/// diff tree における transaction 層の tree の深さ
+pub const N_LOG_TXS: usize = 3;
+pub const N_TXS: usize = 2usize.pow(N_LOG_TXS as u32);
+
+/// diff tree における transaction 層の tree の深さ
+pub const N_LOG_RECIPIENTS: usize = 8;
+
+/// diff tree における transaction 層の tree の深さ
+pub const N_LOG_CONTRACTS: usize = 8;
+
+/// diff tree における transaction 層の tree の深さ
+pub const N_LOG_VARIABLES: usize = 8;
+
+/// 1 つの block に含める deposit の数
+pub const N_DEPOSITS: usize = 8;
+
+/// 1 つの block に含める merge の数
+pub const N_MERGES: usize = 8;
+
+/// 1 つの block に含める purge の数
+pub const N_DIFFS: usize = 8;
+
+/// 1 つの batch でまとめる block の数
+pub const N_BLOCKS: usize = 2;
+
+/// block number の最大値の対数
+pub const N_LOG_MAX_BLOCKS: usize = 32;
 
 fn main() {
-    const N_LOG_MAX_USERS: usize = 3;
-    const N_LOG_MAX_TXS: usize = 3;
-    const N_LOG_MAX_CONTRACTS: usize = 3;
-    const N_LOG_MAX_VARIABLES: usize = 3;
-    const N_LOG_TXS: usize = 2;
-    const N_LOG_RECIPIENTS: usize = 3;
-    const N_LOG_CONTRACTS: usize = 3;
-    const N_LOG_VARIABLES: usize = 3;
-    const N_DEPOSITS: usize = 2;
-    const N_DIFFS: usize = 2;
-    const N_MERGES: usize = 2;
-    const N_TXS: usize = 2usize.pow(N_LOG_TXS as u32);
-    const N_BLOCKS: usize = 2;
-
     let mut world_state_tree = PoseidonSparseMerkleTree::new(
         Arc::new(Mutex::new(NodeDataMemory::default())),
         Default::default(),
@@ -381,7 +406,7 @@ fn main() {
         merge_witnesses: merge_proof,
         purge_input_witnesses: sender2_input_witness.clone(),
         purge_output_witnesses: sender2_output_witness,
-        old_user_asset_root: sender2_input_witness.first().unwrap().0.old_root.0,
+        old_user_asset_root: default_hash,
     };
     let simple_signature_input = SimpleSignatureInput {
         private_key: Wrapper(sender2_account.private_key),
