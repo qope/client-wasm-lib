@@ -71,12 +71,12 @@ pub struct UserTransactionInput {
     old_user_asset_root: HashOut<F>,
 }
 
-#[wasm_bindgen]
-pub fn prove_simple_signature(simple_signature_input_str: &str) -> String {
+#[wasm_bindgen(js_name = "proveSimpleSignature", catch)]
+pub async fn prove_simple_signature(simple_signature_input_str: &str) -> Result<JsValue, JsValue> {
     let simple_signature_input: SimpleSignatureInput =
         serde_json::from_str(simple_signature_input_str)
             .expect("failed loading simple signature json");
-    let proof = _prove_simple_signature::<
+    let proof_result = match _prove_simple_signature::<
         N_LOG_MAX_USERS,
         N_LOG_MAX_TXS,
         N_LOG_MAX_CONTRACTS,
@@ -90,18 +90,22 @@ pub fn prove_simple_signature(simple_signature_input_str: &str) -> String {
     >(
         simple_signature_input.private_key,
         simple_signature_input.message,
-    )
-    .expect("prove failed: prove_simple_signature");
-    let proof_str = serde_json::to_string(&proof).unwrap();
-    proof_str
+    ) {
+        Ok(proof) => Ok(proof),
+        Err(_) => Err("proof failed"),
+    };
+    let proof_str = serde_json::to_string(&proof_result?).unwrap();
+    let promise = js_sys::Promise::resolve(&proof_str.into());
+    let result = wasm_bindgen_futures::JsFuture::from(promise).await?;
+    Ok(result)
 }
 
-#[wasm_bindgen]
-pub fn prove_user_transaction(user_transaction_input_str: &str) -> String {
+#[wasm_bindgen(js_name = "proveUserTransaction")]
+pub async fn prove_user_transaction(user_transaction_input_str: &str) -> Result<JsValue, JsValue> {
     let user_transaction_input: UserTransactionInput =
         serde_json::from_str(user_transaction_input_str)
             .expect("failed loading user transaction json");
-    let proof = _prove_user_transaction::<
+    let proof_result = match _prove_user_transaction::<
         N_LOG_MAX_USERS,
         N_LOG_MAX_TXS,
         N_LOG_MAX_CONTRACTS,
@@ -118,10 +122,14 @@ pub fn prove_user_transaction(user_transaction_input_str: &str) -> String {
         user_transaction_input.purge_input_witnesses,
         user_transaction_input.purge_output_witnesses,
         user_transaction_input.old_user_asset_root,
-    )
-    .expect("prove failed: prove_user_transaction");
-    let proof_str = serde_json::to_string(&proof).unwrap();
-    proof_str
+    ) {
+        Ok(proof) => Ok(proof),
+        Err(_) => Err("proof failed"),
+    };
+    let proof_str = serde_json::to_string(&proof_result?).unwrap();
+    let promise = js_sys::Promise::resolve(&proof_str.into());
+    let result = wasm_bindgen_futures::JsFuture::from(promise).await?;
+    Ok(result)
 }
 
 #[wasm_bindgen]
@@ -129,16 +137,16 @@ pub fn echo(input: &str) -> String {
     String::from_str(input).unwrap()
 }
 
-#[cfg(test)]
-mod tests {
-    use std::fs;
+// #[cfg(test)]
+// mod tests {
+//     use std::fs;
 
-    use super::*;
+//     use super::*;
 
-    #[test]
-    fn test_prove_user_transaction() {
-        let user_transaction_str =
-            fs::read_to_string("../intmax-zkp-core/data/user_transaction_input.json").unwrap();
-        prove_user_transaction(&user_transaction_str);
-    }
-}
+//     #[test]
+//     fn test_prove_user_transaction() {
+//         let user_transaction_str =
+//             fs::read_to_string("../intmax-zkp-core/data/user_transaction_input.json").unwrap();
+//         prove_user_transaction(&user_transaction_str);
+//     }
+// }
