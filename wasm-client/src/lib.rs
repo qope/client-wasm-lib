@@ -13,6 +13,8 @@ use plonky2::field::goldilocks_field::GoldilocksField;
 use plonky2::hash::hash_types::HashOut;
 use serde::{Deserialize, Serialize};
 
+pub use wasm_bindgen_rayon::init_thread_pool;
+
 type F = GoldilocksField;
 
 use wasm_bindgen::prelude::*;

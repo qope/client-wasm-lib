@@ -3,6 +3,7 @@ import logo from "./logo.svg";
 import init, {
   proveSimpleSignature,
   proveUserTransaction,
+  initThreadPool,
   echo,
 } from "wasm-client";
 import "./App.css";
@@ -13,43 +14,41 @@ function App() {
   const [duration, setDuration] = useState(0);
 
   const userTransaction = () => {
-    setIsLoading(true);
-    setProofResult("");
-    setDuration(0);
-    const startTime = Date.now();
-    init().then(() => {
+    (async () => {
+      setIsLoading(true);
+      setProofResult("");
+      setDuration(0);
+      const startTime = Date.now();
       console.log("start proving");
-      fetch("./data/user_transaction_input.json").then((res) => {
-        res.json().then((input_json) => {
-          const input = JSON.stringify(input_json);
-          proveUserTransaction(input).then((proof) => {
-            setProofResult(proof);
-            setIsLoading(false);
-            setDuration(Date.now() - startTime);
-          });
-        });
-      });
-    });
+      await init();
+      await initThreadPool(1);
+      const res = await fetch("./data/user_transaction_input.json");
+      const data = await res.json();
+      const input = JSON.stringify(data);
+      const proof = await proveUserTransaction(input);
+      setProofResult(proof);
+      setIsLoading(false);
+      setDuration(Date.now() - startTime);
+    })();
   };
 
   const simpleSignature = () => {
-    setIsLoading(true);
-    setProofResult("");
-    setDuration(0);
-    const startTime = Date.now();
-    init().then(() => {
+    (async () => {
+      setIsLoading(true);
+      setProofResult("");
+      setDuration(0);
+      const startTime = Date.now();
       console.log("start proving");
-      fetch("./data/simple_signature_input.json").then((res) => {
-        res.json().then((input_json) => {
-          const input = JSON.stringify(input_json);
-          proveSimpleSignature(input).then((proof) => {
-            setProofResult(proof);
-            setIsLoading(false);
-            setDuration(Date.now() - startTime);
-          });
-        });
-      });
-    });
+      await init();
+      await initThreadPool(1);
+      const res = await fetch("./data/simple_signature_input.json");
+      const data = await res.json();
+      const input = JSON.stringify(data);
+      const proof = await proveSimpleSignature(input);
+      setProofResult(proof);
+      setIsLoading(false);
+      setDuration(Date.now() - startTime);
+    })();
   };
 
   return (
