@@ -21,7 +21,7 @@ function App() {
       const startTime = Date.now();
       console.log("start proving");
       await init();
-      await initThreadPool(1);
+      // await initThreadPool(1);
       const res = await fetch("./data/user_transaction_input.json");
       const data = await res.json();
       const input = JSON.stringify(data);
@@ -40,7 +40,7 @@ function App() {
       const startTime = Date.now();
       console.log("start proving");
       await init();
-      await initThreadPool(1);
+      // await initThreadPool(1);
       const res = await fetch("./data/simple_signature_input.json");
       const data = await res.json();
       const input = JSON.stringify(data);
