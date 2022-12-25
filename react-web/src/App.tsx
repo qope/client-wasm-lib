@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import { wrap } from "comlink";
+import { threads } from "wasm-feature-detect";
 
 function App() {
   const worker = new Worker(new URL("./wasm-worker", import.meta.url), {
@@ -13,6 +14,13 @@ function App() {
   const [proofResult, setProofResult] = useState("");
   const [duration, setDuration] = useState(0);
   const [numThreads, setNumThreads] = useState(1);
+  const [wasmThreadSupport, setWasmThreadSupport] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setWasmThreadSupport(await threads());
+    })();
+  }, []);
 
   const userTransaction = () => {
     (async () => {
@@ -50,7 +58,8 @@ function App() {
 
   return (
     <div className="App">
-      <p>crossOriginIsolated: {crossOriginIsolated.toString()}</p>
+      <p>Cross origin isolation: {crossOriginIsolated.toString()}</p>
+      <p>Wasm threads support: {wasmThreadSupport.toString()}</p>
       <p>
         Number of threads{" "}
         <select onChange={(e) => setNumThreads(Number(e.target.value))}>
