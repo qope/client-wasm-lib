@@ -52,11 +52,15 @@ function App() {
     <div className="App">
       <p>crossOriginIsolated: {crossOriginIsolated.toString()}</p>
       <p>
-        Number of thread{" "}
+        Number of threads{" "}
         <select onChange={(e) => setNumThreads(Number(e.target.value))}>
           {Array.from(Array(navigator.hardwareConcurrency).keys()).map(
             (_, i) => (
-              <option key={i + 1} value={i + 1}>
+              <option
+                key={i + 1}
+                value={i + 1}
+                selected={i + 1 === navigator.hardwareConcurrency}
+              >
                 {i + 1}
               </option>
             )
@@ -64,15 +68,14 @@ function App() {
         </select>
         / {navigator.hardwareConcurrency}
       </p>
-
       <p>
-        <button onClick={userTransaction} disabled={isLoading}>
-          prove user transaction
+        <button onClick={simpleSignature} disabled={isLoading}>
+          prove signature
         </button>
       </p>
       <p>
-        <button onClick={simpleSignature} disabled={isLoading}>
-          prove simple signature
+        <button onClick={userTransaction} disabled={isLoading}>
+          prove transaction
         </button>
       </p>
       <p>Status: {!isLoading ? <>idling</> : <>proving...</>} </p>

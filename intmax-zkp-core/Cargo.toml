@@ -12,7 +12,7 @@ itertools = "0.10.5"
 num = "0.4"
 num-bigint = "0.4.3"
 num-traits = "0.2"
-plonky2 = { path="../plonky2/plonky2", default-features = false, features = []}
+plonky2 = { path="../plonky2/plonky2", default-features = false, features = ["parallel"]}
 plonky2_ecdsa = { path="../plonky2/ecdsa"}
 rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }
